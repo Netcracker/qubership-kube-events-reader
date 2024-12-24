@@ -16,8 +16,6 @@ jobs:
         component:
           - name: qubership-kube-events-reader
             file: ./Dockerfile
-          - name: qubership-kube-events-reader-transfer
-            file: docker-transfer/Dockerfile
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
