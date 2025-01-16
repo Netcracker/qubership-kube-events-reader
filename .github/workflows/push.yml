@@ -57,7 +57,7 @@ jobs:
           file: ${{ matrix.component.file }}
           platforms: linux/amd64
           # See https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions#fetching-metadata-about-a-pull-request
-          push: ${{ github.actor != 'dependabot[bot]' }}
+          push: ${{ github.event_name != 'pull_request' || github.actor != 'dependabot[bot]' }}
           provenance: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
