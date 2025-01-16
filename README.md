@@ -1,25 +1,25 @@
-# K8s events reader
+# Qubership kube events reader
 
 This component is used for collecting Kubernetes event logs from Cloud.
 
 ## Table of Content
 
-* [Table of Content](#table-of-content)
-* [Overview](#overview)
-  * [Command line arguments](#command-line-arguments)
-  * [Events metrics](#events-metrics)
-  * [Event log example](#event-log-example)
-* [Repository structure](#repository-structure)
-* [How to start](#how-to-start)
-  * [Build](#build)
-  * [Definition of done](#definition-of-done)
-  * [Deploy](#deploy)
-    * [Prerequisites](#prerequisites)
-    * [HWE & Limits](#hwe--limits)
-    * [Deploy with helm](#deploy-with-helm)
-  * [How to debug](#how-to-debug)
-  * [How to troubleshoot](#how-to-troubleshoot)
-* [CI/CD](#cicd)
+* [Qubership kube events reader](#qubership-kube-events-reader)
+  * [Table of Content](#table-of-content)
+  * [Overview](#overview)
+    * [Command line arguments](#command-line-arguments)
+    * [Events metrics](#events-metrics)
+    * [Event log example](#event-log-example)
+  * [Repository structure](#repository-structure)
+  * [How to start](#how-to-start)
+    * [Build](#build)
+    * [Definition of done](#definition-of-done)
+    * [Deploy](#deploy)
+      * [Prerequisites](#prerequisites)
+      * [HWE and Limits](#hwe-and-limits)
+      * [Deploy with helm](#deploy-with-helm)
+    * [How to debug](#how-to-debug)
+    * [How to troubleshoot](#how-to-troubleshoot)
 
 ## Overview
 
@@ -296,7 +296,7 @@ For `qubership-kube-events-reader` to work properly, in case of sending events a
 should be installed in Kubernetes/Openshift.
 In case of scraping events as metrics Monitoring components (VictoriaMetrics, Grafana etc.) have to be installed.
 
-#### HWE & Limits
+#### HWE and Limits
 
 Events-reader is installed in Kubernetes/Openshift as a pod.
 
@@ -351,11 +351,3 @@ There are no well-defined rules for troubleshooting, as each task is unique, but
 
 * See deployment parameters and cli flags
 * See logs of the service
-
-## CI/CD
-
-The main CI/CD pipeline designed to automize all basic developer routine start from code quality. There are described stages in pipeline:
-
-1. `lint` - stage with jobs that run different linter to check code & documentation.
-2. `tests` - stage with jobs with units tests and other go code checks.
-3. `build` - stage with jobs that build docker image of qubership-kube-events-reader.
