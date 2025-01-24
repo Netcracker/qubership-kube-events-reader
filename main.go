@@ -36,6 +36,36 @@ func init() {
 	klog.SetLogger(logr.FromSlogHandler(Logger.Handler()))
 }
 
+func validateFormatInput(printFormat string) error {
+	// Set a maximum allowed size for the format string.
+	const maxFormatLength = 1024 // 1 KB for example
+
+	if len(printFormat) > maxFormatLength {
+		return fmt.Errorf("format string exceeds maximum allowed length of %d characters", maxFormatLength)
+	}
+
+	return nil
+}
+
+func validateFileSize(filePath string, maxSize int64) error {
+	// Open the file and get its size.
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	stats, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file stats: %w", err)
+	}
+
+	if stats.Size() > maxSize {
+		return fmt.Errorf("file exceeds maximum allowed size of %d bytes", maxSize)
+	}
+	return nil
+}
+
 func main() {
 	var namespaceFlags utils.NamespaceFlagsType
 	flag.Var(&namespaceFlags, "namespace", "Namespace to watch for events. The parameter can be used multiple times. If parameter is not set events of all namespaces will be watched")
@@ -49,6 +79,30 @@ func main() {
 	pprofEnabled := flag.Bool("pprofEnable", true, "Enable pprof")
 	healthServePort := flag.String("pprofAddr", "8080", "Port to health and pprof endpoint")
 	flag.Parse()
+
+	// Validate the input format string.
+	if err := validateFormatInput(*printFormat); err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+
+	if *metricsPort == "" {
+		fmt.Println("Error: metricsPort cannot be empty.")
+		os.Exit(1)
+	}
+
+	if *metricsPath == "" || len(*metricsPath) > 255 {
+		fmt.Println("Error: Invalid metrics path")
+		os.Exit(1)
+	}
+
+	const maxFileSize = 5 * 1024 * 1024 // 5 MB
+
+	// Check if the file exceeds the max allowed size.
+	if err := validateFileSize(*filterFile, maxFileSize); err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
 
 	slog.Info("starting K8s Events Reader...")
 
