@@ -47,25 +47,6 @@ func validateFormatInput(printFormat string) error {
 	return nil
 }
 
-func validateFileSize(filePath string, maxSize int64) error {
-	// Open the file and get its size.
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	stats, err := file.Stat()
-	if err != nil {
-		return fmt.Errorf("failed to get file stats: %w", err)
-	}
-
-	if stats.Size() > maxSize {
-		return fmt.Errorf("file exceeds maximum allowed size of %d bytes", maxSize)
-	}
-	return nil
-}
-
 func main() {
 	var namespaceFlags utils.NamespaceFlagsType
 	flag.Var(&namespaceFlags, "namespace", "Namespace to watch for events. The parameter can be used multiple times. If parameter is not set events of all namespaces will be watched")
@@ -96,12 +77,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	const maxFileSize = 5 * 1024 * 1024 // 5 MB
+	if len(strings.TrimSpace(*filterFile)) != 0 {
+		const maxFileSize = 5 * 1024 * 1024 // 5 MB
 
-	// Check if the file exceeds the max allowed size.
-	if err := validateFileSize(*filterFile, maxFileSize); err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+		// Check if the file exceeds the max allowed size.
+		if err := ValidateFileSize(*filterFile, maxFileSize); err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
+		}
 	}
 
 	slog.Info("starting K8s Events Reader...")
