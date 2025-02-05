@@ -39,4 +39,4 @@ EXPOSE 8080
 
 USER $USER_UID
 
-CMD ["/events-reader/qubership-kube-events-reader"]
+CMD ["/events-reader/eventsreader"]
