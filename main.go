@@ -81,7 +81,7 @@ func main() {
 		const maxFileSize = 5 * 1024 * 1024 // 5 MB
 
 		// Check if the file exceeds the max allowed size.
-		if err := ValidateFileSize(*filterFile, maxFileSize); err != nil {
+		if err := filter.ValidateFileSize(*filterFile, maxFileSize); err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
 		}
