@@ -19,14 +19,14 @@ COPY main.go main.go
 COPY shutdown.go shutdown.go
 COPY pkg/ pkg/
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o qubership-kube-events-reader .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o eventsreader .
 
 # Main container
 FROM alpine:3.21.0
 
 WORKDIR /events-reader/
 
-COPY --from=builder /workspace/qubership-kube-events-reader /events-reader/
+COPY --from=builder /workspace/eventsreader /events-reader/
 
 ENV USER_UID=1001 \
     USER_NAME=qubership-kube-events-reader
