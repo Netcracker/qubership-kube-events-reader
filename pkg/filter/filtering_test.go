@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"flag"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -48,4 +49,11 @@ func Test_GetSinkFiltersByName(t *testing.T) {
 	assert.NotNil(t, sinkT)
 	assert.Equal(t, sink, sinkT)
 	assert.Nil(t, filters.GetSinkFiltersByName("test1"))
+}
+
+func Test_ValidateFileSize(t *testing.T) {
+	const maxFileSize = 5 * 1024 * 1024 // 5 MB
+	filterFile := flag.String("filtersPath", "../test/filtering_config_valid.yaml", "Absolute path to file with filter events configuration")
+	err := ValidateFileSize(*filterFile, maxFileSize)
+	assert.NoError(t, err)
 }

@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"fmt"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"log/slog"
 	"os"
@@ -47,6 +48,26 @@ func (f *Filters) GetSinkFiltersByName(sink string) *Sink {
 		if s.Name == sink {
 			return s
 		}
+	}
+	return nil
+}
+
+func ValidateFileSize(filePath string, maxSize int64) error {
+	// Open the file and get its size.
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	stats, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to get file stats: %w", err)
+	}
+
+	if stats.Size() > maxSize {
+		return fmt.Errorf("file exceeds maximum allowed size of %d bytes", maxSize)
 	}
 	return nil
 }
