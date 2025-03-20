@@ -44,6 +44,7 @@ jobs:
         component:
         - name: qubership-kube-events-reader
           file: ./Dockerfile
+          context: ""
     runs-on: ubuntu-latest
     name: ${{ matrix.component.name }}
     steps:
