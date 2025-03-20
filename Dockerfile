@@ -22,7 +22,7 @@ COPY pkg/ pkg/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o eventsreader .
 
 # Main container
-FROM alpine:3.21.0
+FROM alpine:3.21.3
 
 WORKDIR /events-reader/
 
