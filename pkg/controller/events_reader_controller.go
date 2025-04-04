@@ -59,7 +59,7 @@ func NewNamespacedEventControllers(clientSet kubernetes.Interface, namespaces []
 
 // newEventController implements inner creation of EventController instance
 func newEventController(clientSet kubernetes.Interface, namespace string, newListerWatcherFunc func(kubeRestClient rest.Interface, namespace string) cache.ListerWatcher, sinks []sink.ISink) *EventController {
-	if sinks == nil || len(sinks) < 1 {
+	if len(sinks) < 1 {
 		return nil
 	}
 	rateLimiter := workqueue.DefaultTypedControllerRateLimiter[KeyEvent]()
