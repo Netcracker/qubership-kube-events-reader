@@ -274,8 +274,8 @@ After you made changes related to a task do next steps:
 2. Create tests if you modified behavior of application or fixed a bug (especially if it is not covered by tests).
 3. Build qubership-kube-events-reader Docker image.
 4. Check that all pipeline is succeded (linter, build, deploy & test jobs are passed).
-5. Deploy qubership-kube-events-reader with [`qubership-logging`](https://github.com/Netcracker/qubership-logging/-/blob/main/docs/installation.md#qubership-kube-events-reader)
-   and [`qubership-monitoring`](https://github.com/Netcracker/qubership-monitoring/-/blob/main/docs/installation.md#cloud-events-exporter).
+5. Deploy qubership-kube-events-reader with [`qubership-logging-operator`](https://github.com/Netcracker/qubership-logging-operator/blob/main/docs/installation.md#cloud-events-reader)
+   and [`qubership-monitoring-operator`](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation.md#cloud-events-exporter).
    Check that your feature works fine in possible cases.
 6. Create merge request using merge request template. Name your MR `<TICKET-ID>: <SHORT-DESCRIPTION>`. Describe and
    explain your changes in MR. There you can add any information about the changes (how it was tested, details
@@ -286,9 +286,9 @@ After you made changes related to a task do next steps:
 K8s events Reader is installed in Cloud as a part of:
 
 1. Logging Service. Information about it`s installation
-   described [here](https://github.com/netcracker/qubership-logging/-/blob/main/docs/installation.md#qubership-kube-events-reader).
+   described [here](https://github.com/Netcracker/qubership-logging-operator/blob/main/docs/installation.md#cloud-events-reader).
 2. Platform Monitoring. Information about it`s installation
-   described [here](https://github.com/netcracker/qubership-monitoring/-/blob/main/documents/installation.md#cloud-events-exporter).
+   described [here](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation.md#cloud-events-exporter).
 
 #### Prerequisites
 
@@ -307,8 +307,8 @@ It requires:
 
 #### Deploy with helm
 
-To deploy qubership-kube-events-reader with qubership-logging clone repository. Modify
-[`charts/qubership-logging/values.yaml`](https://github.com/netcracker/qubership-logging/-/blob/main/charts/qubership-logging/values.yaml)
+To deploy qubership-kube-events-reader with qubership-logging-operator clone repository. Modify
+[`charts/qubership-logging-operator/values.yaml`](https://github.com/Netcracker/qubership-logging-operator/blob/main/charts/qubership-logging-operator/values.yaml)
 locally.
 
 Set parameters:
