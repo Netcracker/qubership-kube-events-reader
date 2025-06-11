@@ -1,9 +1,12 @@
 # Build the manager binary
-FROM golang:1.24.2-alpine3.21 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.24.3-alpine3.21 AS builder
+
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 ARG GOPROXY=""
-ENV GOSUMDB=off \
-    GO111MODULE=on
+ENV GO111MODULE=on
 
 WORKDIR /workspace
 
@@ -19,10 +22,10 @@ COPY main.go main.go
 COPY shutdown.go shutdown.go
 COPY pkg/ pkg/
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o eventsreader .
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o eventsreader .
 
 # Main container
-FROM alpine:3.21.3
+FROM alpine:3.22.0
 
 WORKDIR /events-reader/
 
