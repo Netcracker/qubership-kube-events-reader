@@ -275,7 +275,7 @@ After you made changes related to a task do next steps:
 3. Build qubership-kube-events-reader Docker image.
 4. Check that all pipeline is succeded (linter, build, deploy & test jobs are passed).
 5. Deploy qubership-kube-events-reader with [`qubership-logging-operator`](https://github.com/Netcracker/qubership-logging-operator/blob/main/docs/installation.md#cloud-events-reader)
-   and [`qubership-monitoring-operator`](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation.md#cloud-events-exporter).
+   and [`qubership-monitoring-operator`](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation/components/exporters/cloud-events-exporter.md).
    Check that your feature works fine in possible cases.
 6. Create merge request using merge request template. Name your MR `<TICKET-ID>: <SHORT-DESCRIPTION>`. Describe and
    explain your changes in MR. There you can add any information about the changes (how it was tested, details
@@ -288,7 +288,7 @@ K8s events Reader is installed in Cloud as a part of:
 1. Logging Service. Information about it`s installation
    described [here](https://github.com/Netcracker/qubership-logging-operator/blob/main/docs/installation.md#cloud-events-reader).
 2. Platform Monitoring. Information about it`s installation
-   described [here](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation.md#cloud-events-exporter).
+   described [here](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation/components/exporters/cloud-events-exporter.md).
 
 #### Prerequisites
 
