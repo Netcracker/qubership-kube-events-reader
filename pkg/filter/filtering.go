@@ -59,7 +59,13 @@ func ValidateFileSize(filePath string, maxSize int64) error {
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+	defer func() error {
+		err := file.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close file: %w", err)
+		}
+		return nil
+	}()
 
 	stats, err := file.Stat()
 	if err != nil {

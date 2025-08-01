@@ -155,7 +155,10 @@ func Test_ClusterEventController_MetricsSink(t *testing.T) {
 	resp, err := test.FakeServer.Client().Get(test.FakeServer.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 	responseBody, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.True(t, len(responseBody) > 0)
@@ -232,7 +235,10 @@ func Test_ClusterEventController_LogsSink_MetricsSink(t *testing.T) {
 	resp, err := test.FakeServer.Client().Get(test.FakeServer.URL)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	}()
 	responseBody, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.True(t, len(responseBody) > 0)
