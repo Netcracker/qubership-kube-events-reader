@@ -52,19 +52,18 @@ func (f *Filters) GetSinkFiltersByName(sink string) *Sink {
 	return nil
 }
 
-func ValidateFileSize(filePath string, maxSize int64) error {
+func ValidateFileSize(filePath string, maxSize int64) (err error) {
 	// Open the file and get its size.
 
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
 	}
-	defer func() error {
-		err := file.Close()
-		if err != nil {
-			return fmt.Errorf("failed to close file: %w", err)
+	defer func() {
+		cle := file.Close()
+		if cle != nil && err == nil {
+			err = fmt.Errorf("failed to close file: %w", cle)
 		}
-		return nil
 	}()
 
 	stats, err := file.Stat()
