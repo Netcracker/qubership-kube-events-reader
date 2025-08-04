@@ -203,10 +203,11 @@ func (c *EventController) processNextWorkItem() bool {
 
 	var err error
 	if keyEvent != nilKeyEvent {
-		if keyEvent.EventType == watch.Added {
-			slog.Debug("add event is triggered for object", "key", keyEvent.Key)
-		} else if keyEvent.EventType == watch.Modified {
-			slog.Debug("modify event is triggered for object", "key", keyEvent.Key)
+		switch keyEvent.EventType {
+			case watch.Added:
+				slog.Debug("add event is triggered for object", "key", keyEvent.Key)
+			case watch.Modified:
+				slog.Debug("modify event is triggered for object", "key", keyEvent.Key)
 		}
 		err = c.syncHandler(keyEvent.Key)
 	}
