@@ -7,7 +7,7 @@ toolchain go1.24.4
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/prometheus/client_golang v1.23.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	go.uber.org/automaxprocs v1.6.0
 	k8s.io/api v0.33.3
 	k8s.io/apimachinery v0.33.3
