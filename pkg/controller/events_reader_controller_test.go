@@ -20,7 +20,7 @@ import (
 	fcache "k8s.io/client-go/tools/cache/testing"
 )
 
-var fKubeClient = fake.NewSimpleClientset()
+var fKubeClient = fake.NewClientset()
 
 // FakeListerWatcherFunc returns function to create cache.ListerWatcher for testing
 func FakeListerWatcherFunc(source *fcache.FakeControllerSource) func(kubeRestClient rest.Interface, namespace string) cache.ListerWatcher {
