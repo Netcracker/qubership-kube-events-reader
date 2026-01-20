@@ -70,7 +70,11 @@ func TestStartHealthEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartHealthEndpoint failed: %v", err)
 	}
-	defer srv.Close()
+	defer func() {
+		if err := srv.Close(); err != nil {
+			t.Logf("Error closing server: %v", err)
+		}
+	}()
 
 	// Give server time to start
 	time.Sleep(100 * time.Millisecond)
@@ -80,7 +84,11 @@ func TestStartHealthEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to make request to health endpoint: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			t.Logf("Error closing response body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", resp.StatusCode)
