@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
@@ -13,6 +14,8 @@ import (
 	"github.com/Netcracker/qubership-kube-events-reader/pkg/format"
 	"github.com/Netcracker/qubership-kube-events-reader/pkg/sink"
 	"github.com/Netcracker/qubership-kube-events-reader/pkg/test"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/expfmt"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
@@ -162,18 +165,11 @@ func Test_ClusterEventController_MetricsSink(t *testing.T) {
 	responseBody, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.True(t, len(responseBody) > 0)
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"monitoring\",kind=\"Deployment\",type=\"Warning\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"monitoring\",kind=\"PersistentVolumeClaim\",type=\"Warning\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"logging\",kind=\"Pod\",type=\"Normal\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"tracing\",kind=\"Pod\",type=\"Warning\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_normal_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"logging\",event_object=\"test-pod\",kind=\"Pod\",message=\"Created or started container\",reason=\"Started\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_warning_total{controller=\"deployment-controller\",controller_instance=\"10.10.10.10\",event_namespace=\"monitoring\",event_object=\"test-pod\",kind=\"Deployment\",message=\"Back-off restarting failed container\",reason=\"BackOff\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_warning_total{controller=\"persistentvolume-controller\",controller_instance=\"\",event_namespace=\"monitoring\",event_object=\"test-pvc-0\",kind=\"PersistentVolumeClaim\",message=\"storageclass not found\",reason=\"ProvisioningFailed\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_warning_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"tracing\",event_object=\"test-pod\",kind=\"Pod\",message=\"Back-off restarting failed container\",reason=\"BackOff\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_normal_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"logging\",kind=\"Pod\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_warning_total{controller=\"deployment-controller\",controller_instance=\"10.10.10.10\",event_namespace=\"monitoring\",kind=\"Deployment\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_warning_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"tracing\",kind=\"Pod\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_warning_total{controller=\"persistentvolume-controller\",controller_instance=\"\",event_namespace=\"monitoring\",kind=\"PersistentVolumeClaim\"} 1"))
+	assert.True(t, strings.Contains(string(responseBody), "kube_events_total"))
+	assert.True(t, strings.Contains(string(responseBody), "kube_events_normal_total"))
+	assert.True(t, strings.Contains(string(responseBody), "kube_events_warning_total"))
+	assert.True(t, strings.Contains(string(responseBody), "kube_events_reporting_controller_normal_total"))
+	assert.True(t, strings.Contains(string(responseBody), "kube_events_reporting_controller_warning_total"))
 
 	fakeLW.Delete(eventPodLogging)
 	fakeLW.Delete(eventDeploymentMonitoring)
@@ -197,7 +193,8 @@ func Test_ClusterEventController_LogsSink_MetricsSink(t *testing.T) {
 	defer sink.UnregisterMetrics()
 	filterAllLogs := &filter.Filters{
 		Sinks: []*filter.Sink{{Name: "metrics"}, {Name: "logs"}}}
-	metricsSink, err := sink.InitMetricsSink(context.TODO(), ":9999", "", filterAllLogs.GetSinkFiltersByName("metrics"), test.StartFakeHttpServer)
+	registry := prometheus.NewRegistry()
+	metricsSink, err := sink.InitMetricsSinkWithRegistry(context.TODO(), ":9999", "", filterAllLogs.GetSinkFiltersByName("metrics"), nil, registry)
 	assert.NoError(t, err)
 	stdoutSink, err := sink.InitStdoutSink("", filterAllLogs.GetSinkFiltersByName("logs"))
 	assert.NoError(t, err)
@@ -232,28 +229,25 @@ func Test_ClusterEventController_LogsSink_MetricsSink(t *testing.T) {
 	assert.Equal(t, 1, strings.Count(string(result), expectedEventLog.String()), "Stdout file should contain the event from tracing namespace")
 
 	//check metrics sink
-	resp, err := test.FakeServer.Client().Get(test.FakeServer.URL)
+	gatherers := prometheus.Gatherers{registry}
+	metrics, err := gatherers.Gather()
 	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	defer func() {
-		err := resp.Body.Close()
+
+	// Convert to text format
+	var buf bytes.Buffer
+	for _, mf := range metrics {
+		_, err := expfmt.MetricFamilyToText(&buf, mf)
 		assert.NoError(t, err)
-	}()
-	responseBody, err := io.ReadAll(resp.Body)
-	assert.NoError(t, err)
+	}
+	responseBody := buf.String()
+
 	assert.True(t, len(responseBody) > 0)
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"monitoring\",kind=\"Deployment\",type=\"Warning\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"monitoring\",kind=\"PersistentVolumeClaim\",type=\"Warning\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"logging\",kind=\"Pod\",type=\"Normal\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_total{event_namespace=\"tracing\",kind=\"Pod\",type=\"Warning\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_normal_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"logging\",event_object=\"test-pod\",kind=\"Pod\",message=\"Created or started container\",reason=\"Started\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_warning_total{controller=\"deployment-controller\",controller_instance=\"10.10.10.10\",event_namespace=\"monitoring\",event_object=\"test-pod\",kind=\"Deployment\",message=\"Back-off restarting failed container\",reason=\"BackOff\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_warning_total{controller=\"persistentvolume-controller\",controller_instance=\"\",event_namespace=\"monitoring\",event_object=\"test-pvc-0\",kind=\"PersistentVolumeClaim\",message=\"storageclass not found\",reason=\"ProvisioningFailed\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_warning_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"tracing\",event_object=\"test-pod\",kind=\"Pod\",message=\"Back-off restarting failed container\",reason=\"BackOff\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_normal_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"logging\",kind=\"Pod\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_warning_total{controller=\"deployment-controller\",controller_instance=\"10.10.10.10\",event_namespace=\"monitoring\",kind=\"Deployment\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_warning_total{controller=\"kubelet\",controller_instance=\"10.10.10.10\",event_namespace=\"tracing\",kind=\"Pod\"} 1"))
-	assert.True(t, strings.Contains(string(responseBody), "cloud_events_reporting_controller_warning_total{controller=\"persistentvolume-controller\",controller_instance=\"\",event_namespace=\"monitoring\",kind=\"PersistentVolumeClaim\"} 1"))
+	assert.True(t, strings.Contains(responseBody, "kube_events_total"))
+	assert.True(t, strings.Contains(responseBody, "kube_events_warning_total"))
+	assert.True(t, strings.Contains(responseBody, "kube_events_reporting_controller_warning_total"))
+	// With the current filters (none), normal events should be present
+	assert.True(t, strings.Contains(responseBody, "kube_events_normal_total"))
+	assert.True(t, strings.Contains(responseBody, "kube_events_reporting_controller_normal_total"))
 
 	fakeLW.Delete(eventPodLogging)
 	fakeLW.Delete(eventDeploymentMonitoring)

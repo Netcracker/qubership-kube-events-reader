@@ -2,13 +2,15 @@ package test
 
 import (
 	"context"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var TestEventsSlice = []*corev1.Event{EventPodLogging, EventPodTracing, EventDeploymentMonitoring, EventPvcMonitoring}
@@ -140,5 +142,5 @@ func ChangeFileToStdout(initialStdout *os.File) error {
 var FakeServer = &httptest.Server{}
 
 func StartFakeHttpServer(ctx context.Context, port string) {
-	FakeServer = httptest.NewServer(promhttp.Handler())
+	FakeServer = httptest.NewServer(promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}))
 }

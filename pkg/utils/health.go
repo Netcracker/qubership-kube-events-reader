@@ -44,13 +44,13 @@ func StartHealthEndpoint(ctx context.Context, pprofEnabled bool, port string) (*
 
 func healthCheck(responseWriter http.ResponseWriter, request *http.Request) {
 	if request.Method == http.MethodGet {
+		responseWriter.Header().Set("Content-Type", "application/json")
 		responseWriter.WriteHeader(http.StatusOK)
-		responseWriter.Header().Add("ContentType", "application/json")
 		_, _ = responseWriter.Write([]byte("ok"))
 	}
 }
 
 func IsPortValid(port string) bool {
-	portRegexp := regexp.MustCompile(`\d{4,6}`)
+	portRegexp := regexp.MustCompile(`^:?\d{4,6}$`)
 	return portRegexp.MatchString(port)
 }
