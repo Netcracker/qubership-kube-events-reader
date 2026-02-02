@@ -25,7 +25,7 @@ COPY pkg/ pkg/
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -o eventsreader .
 
 # Main container
-FROM alpine:3.23.2
+FROM alpine:3.23.3
 
 WORKDIR /events-reader/
 
