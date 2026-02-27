@@ -58,17 +58,27 @@ type PrometheusMetricsSink struct {
 }
 
 func InitMetricsSink(ctx context.Context, port string, metricsPath string, filters *filter.Sink, startHttpEndpoint func(context.Context, string)) (*PrometheusMetricsSink, error) {
+	return InitMetricsSinkWithRegistry(ctx, port, metricsPath, filters, startHttpEndpoint, nil)
+}
+
+func InitMetricsSinkWithRegistry(ctx context.Context, port string, metricsPath string, filters *filter.Sink, startHttpEndpoint func(context.Context, string), registry prometheus.Registerer) (*PrometheusMetricsSink, error) {
 	if !utils.IsPortValid(port) {
 		return nil, fmt.Errorf("port is not valid for metrics endpoint. Given value: %v", port)
 	}
 	sink := initializeSinkWithFilters(filters)
-	registerMetrics()
+	aggregation.InitAggregations()
+	if registry == nil {
+		registry = prometheus.DefaultRegisterer
+	}
 	if startHttpEndpoint == nil {
-		startMetricsEndpoint(ctx, port, metricsPath)
+		registerMetricsToRegistry(registry)
+		if registry == prometheus.DefaultRegisterer {
+			startMetricsEndpoint(ctx, port, metricsPath)
+		}
 	} else {
+		registerMetricsToRegistry(registry)
 		startHttpEndpoint(ctx, port)
 	}
-	aggregation.InitAggregations()
 	return &PrometheusMetricsSink{Sink: sink}, nil
 }
 
@@ -97,20 +107,46 @@ func (ms *PrometheusMetricsSink) Release(eventObj *corev1.Event) error {
 	if !ms.IsEventAllowed(eventObj) {
 		return nil
 	}
-	SummaryCounter.WithLabelValues(eventObj.InvolvedObject.Kind, eventObj.InvolvedObject.Namespace, eventObj.Type).Inc()
+
+	// Sanitize label values only for required fields that should always have values
+	kind := eventObj.InvolvedObject.Kind
+	if kind == "" {
+		kind = "unknown"
+	}
+	namespace := eventObj.InvolvedObject.Namespace
+	if namespace == "" {
+		namespace = "unknown"
+	}
+	eventType := eventObj.Type
+	if eventType == "" {
+		eventType = "unknown"
+	}
+	name := eventObj.InvolvedObject.Name
+	if name == "" {
+		name = "unknown"
+	}
+	reason := eventObj.Reason
+	if reason == "" {
+		reason = "unknown"
+	}
+	// Keep optional fields as empty strings if legitimately empty
+	reportingController := eventObj.ReportingController
+	reportingInstance := eventObj.ReportingInstance
 	message := aggregation.GetCommonMessage(eventObj.InvolvedObject.Kind, eventObj.Reason, eventObj.Message)
+
+	SummaryCounter.WithLabelValues(kind, namespace, eventType).Inc()
 	if strings.EqualFold(eventObj.Type, corev1.EventTypeNormal) {
-		ReportingControllerNormalCounter.WithLabelValues(eventObj.ReportingController, eventObj.ReportingInstance, eventObj.InvolvedObject.Kind, eventObj.InvolvedObject.Namespace).Inc()
-		NormalCounter.WithLabelValues(eventObj.InvolvedObject.Kind, eventObj.InvolvedObject.Name, eventObj.InvolvedObject.Namespace, eventObj.Reason, eventObj.ReportingController, eventObj.ReportingInstance, message).Inc()
+		ReportingControllerNormalCounter.WithLabelValues(reportingController, reportingInstance, kind, namespace).Inc()
+		NormalCounter.WithLabelValues(kind, name, namespace, reason, reportingController, reportingInstance, message).Inc()
 	} else {
-		ReportingControllerWarningCounter.WithLabelValues(eventObj.ReportingController, eventObj.ReportingInstance, eventObj.InvolvedObject.Kind, eventObj.InvolvedObject.Namespace).Inc()
-		WarningCounter.WithLabelValues(eventObj.InvolvedObject.Kind, eventObj.InvolvedObject.Name, eventObj.InvolvedObject.Namespace, eventObj.Reason, eventObj.ReportingController, eventObj.ReportingInstance, message).Inc()
+		ReportingControllerWarningCounter.WithLabelValues(reportingController, reportingInstance, kind, namespace).Inc()
+		WarningCounter.WithLabelValues(kind, name, namespace, reason, reportingController, reportingInstance, message).Inc()
 	}
 	return nil
 }
 
-func registerMetrics() {
-	prometheus.MustRegister(versionGauge, SummaryCounter, NormalCounter, WarningCounter, ReportingControllerNormalCounter, ReportingControllerWarningCounter)
+func registerMetricsToRegistry(registry prometheus.Registerer) {
+	registry.MustRegister(versionGauge, SummaryCounter, NormalCounter, WarningCounter, ReportingControllerNormalCounter, ReportingControllerWarningCounter)
 }
 
 func UnregisterMetrics() {
