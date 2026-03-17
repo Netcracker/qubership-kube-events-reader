@@ -3,7 +3,7 @@ updates:
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
-    interval: "monthly"
+    interval: "weekly"
   commit-message:
     prefix: chore
     prefix-development: chore
@@ -16,7 +16,7 @@ updates:
 - package-ecosystem: "gomod"
   directory: "/"
   schedule:
-    interval: "monthly"
+    interval: "weekly"
   commit-message:
     prefix: chore
     prefix-development: chore
@@ -30,7 +30,7 @@ updates:
 - package-ecosystem: "docker"
   directory: "/"
   schedule:
-    interval: "monthly"
+    interval: "weekly"
   commit-message:
     prefix: chore
     prefix-development: chore
