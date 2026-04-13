@@ -27,13 +27,15 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
+  packages: write
 jobs:
   test:
     name: Build and test with coverage
-    uses: Netcracker/qubership-core-infra/.github/workflows/go-build-with-sonar.yaml@05f471f3d4da2107a6ed3286f839ec517c2c18b8 # v1.3.0
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@bc2a0bd082147e23b4091616c608a21cc2957728 # v2.4.1
     with:
-      actor: ${{ github.actor }}
+      go-module-dir: '.'
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
-    secrets:
-      sonar-token: ${{ secrets.SONAR_TOKEN }}
-
+      cover-packages: './pkg/...'
+      skip-docker: true
+    secrets: inherit
