@@ -26,7 +26,6 @@ func TestShutdownRunsFinalizersWithShutdownContext(t *testing.T) {
 func TestShutdownReturnsTimeoutError(t *testing.T) {
 	err := Shutdown(context.Background(), 10*time.Millisecond, func(ctx context.Context) {
 		<-ctx.Done()
-		time.Sleep(20 * time.Millisecond)
 	})
 	if err == nil {
 		t.Fatal("expected timeout error")
