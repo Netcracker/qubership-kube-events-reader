@@ -29,7 +29,9 @@ func TestStartHealthEndpointRegistersHandlers(t *testing.T) {
 		t.Fatalf("failed to find free port: %v", err)
 	}
 	port := strconv.Itoa(l.Addr().(*net.TCPAddr).Port)
-	l.Close()
+	if err = l.Close(); err != nil {
+		t.Fatalf("failed to close listener: %v", err)
+	}
 
 	srv, err := StartHealthEndpoint(ctx, true, port)
 	if err != nil {
