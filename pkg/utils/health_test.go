@@ -2,8 +2,10 @@ package utils
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -22,7 +24,14 @@ func TestStartHealthEndpointRegistersHandlers(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	srv, err := StartHealthEndpoint(ctx, true, "18080")
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatalf("failed to find free port: %v", err)
+	}
+	port := strconv.Itoa(l.Addr().(*net.TCPAddr).Port)
+	l.Close()
+
+	srv, err := StartHealthEndpoint(ctx, true, port)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
