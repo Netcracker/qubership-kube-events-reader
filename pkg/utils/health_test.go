@@ -67,7 +67,7 @@ func TestHealthCheckIgnoresNonGet(t *testing.T) {
 	healthCheck(recorder, req)
 
 	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected default recorder status for ignored method, got %d", recorder.Code)
+		t.Fatalf("expected status 200 (httptest default, handler writes nothing for non-GET), got %d", recorder.Code)
 	}
 	if recorder.Body.Len() != 0 {
 		t.Fatalf("expected empty body for ignored method, got %q", recorder.Body.String())
