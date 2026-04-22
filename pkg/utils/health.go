@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
-	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -51,6 +51,9 @@ func healthCheck(responseWriter http.ResponseWriter, request *http.Request) {
 }
 
 func IsPortValid(port string) bool {
-	portRegexp := regexp.MustCompile(`\d{4,6}`)
-	return portRegexp.MatchString(port)
+	n, err := strconv.Atoi(port)
+	if err != nil {
+		return false
+	}
+	return n >= 1 && n <= 65535
 }

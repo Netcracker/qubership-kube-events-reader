@@ -70,11 +70,17 @@ func TestIsPortValid(t *testing.T) {
 		port  string
 		valid bool
 	}{
-		{port: "999", valid: false},
+		{port: "0", valid: false},
+		{port: "1", valid: true},
+		{port: "999", valid: true},
 		{port: "8080", valid: true},
-		{port: "123456", valid: true},
-		{port: "1234567", valid: true},
-		{port: "port8080", valid: true},
+		{port: "65535", valid: true},
+		{port: "65536", valid: false},
+		{port: "123456", valid: false},
+		{port: "1234567", valid: false},
+		{port: "port8080", valid: false},
+		{port: "abc", valid: false},
+		{port: "", valid: false},
 	}
 
 	for _, testCase := range testCases {
