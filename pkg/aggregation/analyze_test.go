@@ -94,40 +94,39 @@ func TestGetAllKindsMessageByReason(t *testing.T) {
 }
 
 func TestGetCommonMessageRoutesByKind(t *testing.T) {
-	originalPodRegexps := podAggregationRegexps
-	originalPodLabels := podAggregationLabelValues
-	originalIssuerRegexps := issuerAggregationRegexps
-	originalIssuerLabels := issuerAggregationLabelValues
-	defer func() {
-		podAggregationRegexps = originalPodRegexps
-		podAggregationLabelValues = originalPodLabels
-		issuerAggregationRegexps = originalIssuerRegexps
-		issuerAggregationLabelValues = originalIssuerLabels
-	}()
-
-	podAggregationRegexps = map[int]*regexp.Regexp{
-		0: regexp.MustCompile("pod event .*"),
-	}
-	podAggregationLabelValues = map[int]string{
-		0: "pod-normalized",
-	}
-	issuerAggregationRegexps = map[int]*regexp.Regexp{
-		0: regexp.MustCompile("issuer event .*"),
-	}
-	issuerAggregationLabelValues = map[int]string{
-		0: "issuer-normalized",
+	// Pod routes to getCommonMessageForEvent, which handles OwnerRefInvalidNamespace
+	// by reason alone. The default fallback (getAllKindsMessageByReason) additionally
+	// requires the message to match a pattern, so these two paths produce different
+	// results for the same input — proving the routing without needing regexp tables.
+	if got := GetCommonMessage("PoD", "OwnerRefInvalidNamespace", "unmatched"); got != "ownerRef does not exist in namespace" {
+		t.Fatalf("expected pod route to handle OwnerRefInvalidNamespace by reason, got %q", got)
 	}
 
-	if got := GetCommonMessage("PoD", "AnyReason", "pod event happened"); got != "pod-normalized" {
-		t.Fatalf("expected pod route to use pod aggregation tables, got %q", got)
+	// HPA has unique reason pass-through not shared by any other kind.
+	if got := GetCommonMessage("horizontalpodautoscaler", "FailedGetScale", "ignored"); got != "FailedGetScale" {
+		t.Fatalf("expected HPA route to return reason for FailedGetScale, got %q", got)
 	}
+
+	// Issuer and ClusterIssuer both route to getCommonMessageForCertManager.
 	if got := GetCommonMessage("issuer", "ErrGetKeyPair", "ignored"); got != "Error getting keypair for CA issuer" {
 		t.Fatalf("expected issuer special case, got %q", got)
 	}
-	if got := GetCommonMessage("ClusterIssuer", "OtherReason", "issuer event happened"); got != "issuer-normalized" {
-		t.Fatalf("expected cluster issuer route to use cert-manager tables, got %q", got)
+	if got := GetCommonMessage("ClusterIssuer", "ErrGetKeyPair", "ignored"); got != "Error getting keypair for CA issuer" {
+		t.Fatalf("expected ClusterIssuer to share issuer special case, got %q", got)
 	}
+	// ClusterIssuer also routes through getCommonMessageForEvent (not the default
+	// fallback), so OwnerRefInvalidNamespace is handled by reason alone here too.
+	if got := GetCommonMessage("ClusterIssuer", "OwnerRefInvalidNamespace", "unmatched"); got != "ownerRef does not exist in namespace" {
+		t.Fatalf("expected ClusterIssuer route to handle OwnerRefInvalidNamespace by reason, got %q", got)
+	}
+
+	// Unknown kinds fall back to getAllKindsMessageByReason.
 	if got := GetCommonMessage("UnknownKind", "UpdateError", `x is forbidden: User "u" cannot update resource "r" in API group`); got != "Forbidden: User cannot update resource" {
 		t.Fatalf("expected unknown kinds to use generic fallback rules, got %q", got)
+	}
+	// Confirm the default fallback does NOT handle OwnerRefInvalidNamespace by reason
+	// alone — it requires the message to match, unlike the kind-specific handlers above.
+	if got := GetCommonMessage("UnknownKind", "OwnerRefInvalidNamespace", "unmatched"); got != "unmatched" {
+		t.Fatalf("expected default fallback to require message match for OwnerRefInvalidNamespace, got %q", got)
 	}
 }
