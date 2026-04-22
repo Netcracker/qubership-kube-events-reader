@@ -133,7 +133,7 @@ func Test_ClusterEventController_MetricsSink(t *testing.T) {
 	defer sink.UnregisterMetrics()
 	filterAllLogs := &filter.Filters{
 		Sinks: []*filter.Sink{{Name: "metrics"}}}
-	metricsSink, err := sink.InitMetricsSink(context.TODO(), ":9999", "", filterAllLogs.GetSinkFiltersByName("metrics"), test.StartFakeHttpServer)
+	metricsSink, err := sink.InitMetricsSink(context.TODO(), "9999", "", filterAllLogs.GetSinkFiltersByName("metrics"), test.StartFakeHttpServer)
 	assert.NoError(t, err, "No error should happen")
 
 	controller := NewClusterEventController(fKubeClient, FakeListerWatcherFunc(fakeLW), []sink.ISink{metricsSink})
@@ -197,7 +197,7 @@ func Test_ClusterEventController_LogsSink_MetricsSink(t *testing.T) {
 	defer sink.UnregisterMetrics()
 	filterAllLogs := &filter.Filters{
 		Sinks: []*filter.Sink{{Name: "metrics"}, {Name: "logs"}}}
-	metricsSink, err := sink.InitMetricsSink(context.TODO(), ":9999", "", filterAllLogs.GetSinkFiltersByName("metrics"), test.StartFakeHttpServer)
+	metricsSink, err := sink.InitMetricsSink(context.TODO(), "9999", "", filterAllLogs.GetSinkFiltersByName("metrics"), test.StartFakeHttpServer)
 	assert.NoError(t, err)
 	stdoutSink, err := sink.InitStdoutSink("", filterAllLogs.GetSinkFiltersByName("logs"))
 	assert.NoError(t, err)
