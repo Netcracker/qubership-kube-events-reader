@@ -14,7 +14,7 @@ import (
 
 func TestPrometheusMetricsSink_InitMetricsSink_Release_WithoutFilters(t *testing.T) {
 	var filtersSink = filter.Sink{}
-	testSink, err := InitMetricsSink(context.Background(), ":9999", "", &filtersSink, test.StartFakeHttpServer)
+	testSink, err := InitMetricsSink(context.Background(), "9999", "", &filtersSink, test.StartFakeHttpServer)
 	defer test.FakeServer.Close()
 	defer UnregisterMetrics()
 	assert.NoError(t, err)
@@ -51,7 +51,7 @@ func TestPrometheusMetricsSink_InitMetricsSink_Release_WithoutFilters(t *testing
 }
 
 func TestPrometheusMetricsSink_InitMetricsSink_Release_WithFilters(t *testing.T) {
-	testSink, err := InitMetricsSink(context.Background(), ":9999", "", &filtersSinkMatchAndExclude, test.StartFakeHttpServer)
+	testSink, err := InitMetricsSink(context.Background(), "9999", "", &filtersSinkMatchAndExclude, test.StartFakeHttpServer)
 	defer test.FakeServer.Close()
 	defer UnregisterMetrics()
 	assert.NoError(t, err)
