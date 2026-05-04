@@ -129,14 +129,14 @@ func NewIndexerInformer(kubeRestClient rest.Interface, namespace string, queue w
 	eventListWatcher := watcherFunc(kubeRestClient, namespace)
 
 	handlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(event interface{}) {
+		AddFunc: func(event any) {
 			key, err := cache.MetaNamespaceKeyFunc(event)
 			//todo here can be added some filters to not add to queue
 			if err == nil {
 				queue.AddRateLimited(KeyEvent{Key: key, EventType: watch.Added})
 			}
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj any) {
 			newEvent := newObj.(*corev1.Event)
 			oldEvent := oldObj.(*corev1.Event)
 			if newEvent.ResourceVersion == oldEvent.ResourceVersion {
@@ -173,7 +173,7 @@ func (c *EventController) Run(workers int, stopCh chan struct{}) {
 		return
 	}
 
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
@@ -204,10 +204,10 @@ func (c *EventController) processNextWorkItem() bool {
 	var err error
 	if keyEvent != nilKeyEvent {
 		switch keyEvent.EventType {
-			case watch.Added:
-				slog.Debug("add event is triggered for object", "key", keyEvent.Key)
-			case watch.Modified:
-				slog.Debug("modify event is triggered for object", "key", keyEvent.Key)
+		case watch.Added:
+			slog.Debug("add event is triggered for object", "key", keyEvent.Key)
+		case watch.Modified:
+			slog.Debug("modify event is triggered for object", "key", keyEvent.Key)
 		}
 		err = c.syncHandler(keyEvent.Key)
 	}
@@ -239,7 +239,7 @@ func (c *EventController) syncHandler(key string) error {
 }
 
 // processEvent implements logic of processing event and printing it to stdout
-func (c *EventController) processEvent(obj interface{}) error {
+func (c *EventController) processEvent(obj any) error {
 
 	slog.Debug("process triggered for an object", "object", obj)
 	eventObj, ok := obj.(*corev1.Event)

@@ -21,8 +21,7 @@ func TestStartHealthEndpointRejectsInvalidPort(t *testing.T) {
 }
 
 func TestStartHealthEndpointRegistersHandlers(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	l, err := net.Listen("tcp", ":0")
 	if err != nil {
