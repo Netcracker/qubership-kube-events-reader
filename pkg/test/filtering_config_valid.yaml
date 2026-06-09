@@ -1,0 +1,14 @@
+sinks:
+  - name: "metrics"
+    match:
+      - type: "Warning"
+        kind: "Pod|Deployment"
+    exclude:
+      - type: "Normal"
+        message: ".*image.*"
+      - reason: "Completed|Pulled|Started"
+  - name: "logs"
+    match:
+      - type: "Warning"
+    exclude:
+      - reportingController: "nginx-ingress-controller"
