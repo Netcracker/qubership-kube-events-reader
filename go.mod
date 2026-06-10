@@ -2,6 +2,8 @@ module github.com/Netcracker/qubership-kube-events-reader
 
 go 1.26.0
 
+toolchain go1.26.4
+
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/prometheus/client_golang v1.23.2
