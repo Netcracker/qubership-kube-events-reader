@@ -1,14 +1,18 @@
 name: Go test with Sonar
+run-name: "Ref: ${{ github.ref_name }}. On ${{ github.event_name }}"
 on:
   push: {}
   pull_request:
     types: [ opened, synchronize, reopened ]
 
-permissions:
-  contents: read
+permissions: {}
 jobs:
   prepare:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
     outputs:
       sonar-project-key: ${{ steps.config.outputs.sonar-project-key }}
     steps:
@@ -33,11 +37,10 @@ jobs:
 
   lint:
     name: Lint Go modules
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
-      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,10 +54,28 @@ jobs:
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.13.2
-          only-new-issues: true
           args: --timeout=10m
 
   test:
+    if: github.event_name == 'pull_request'
+    name: Go validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Test with coverage
+        run: go test -v ./... -coverpkg=./... -coverprofile=coverage.out
+
+  report:
+    if: github.event_name == 'push'
     needs: prepare
     name: Build and test with coverage
     uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@8a233b03c5b5355d59c1585ffdaa1f45ea816405 # v2.6.1
@@ -68,3 +89,15 @@ jobs:
       contents: read
       pull-requests: write
       packages: write
+
+  go-ci-gate:
+    name: Go CI Gate
+    needs: [lint, test]
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Require successful Go validation
+        if: needs.lint.result != 'success' || needs.test.result != 'success'
+        run: exit 1
