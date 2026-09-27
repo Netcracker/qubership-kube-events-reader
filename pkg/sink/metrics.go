@@ -57,9 +57,12 @@ type PrometheusMetricsSink struct {
 	*Sink
 }
 
-func InitMetricsSink(ctx context.Context, port string, metricsPath string, filters *filter.Sink, startHttpEndpoint func(context.Context, string)) (*PrometheusMetricsSink, error) {
+func InitMetricsSink(ctx context.Context, port string, metricsPath string, filters *filter.Sink, aggregationConfig *aggregation.Config, startHttpEndpoint func(context.Context, string)) (*PrometheusMetricsSink, error) {
 	if !utils.IsPortValid(port) {
 		return nil, fmt.Errorf("port is not valid for metrics endpoint. Given value: %v", port)
+	}
+	if err := aggregation.InitAggregations(aggregationConfig); err != nil {
+		return nil, fmt.Errorf("invalid message aggregation configuration: %w", err)
 	}
 	sink := initializeSinkWithFilters(filters)
 	registerMetrics()
@@ -68,7 +71,6 @@ func InitMetricsSink(ctx context.Context, port string, metricsPath string, filte
 	} else {
 		startHttpEndpoint(ctx, port)
 	}
-	aggregation.InitAggregations()
 	return &PrometheusMetricsSink{Sink: sink}, nil
 }
 
