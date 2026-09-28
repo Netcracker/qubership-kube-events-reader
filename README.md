@@ -36,7 +36,7 @@ and collect or send data of event.
 
 Entrypoint of K8s events Reader is `/events-reader/eventsreader`.
 
-<!-- markdownlint-disable line-length -->
+<!-- markdownlint-disable line-length no-inline-html -->
 
 | Argument      | Default value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Description                                                                                                                                  |
 |---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -45,12 +45,12 @@ Entrypoint of K8s events Reader is `/events-reader/eventsreader`.
 | `metricsPort` | `9999`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Port to expose Prometheus metrics on                                                                                                         |
 | `metricsPath` | `/metrics`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | HTTP path to scrape for Prometheus metrics                                                                                                   |
 | `filtersPath` | `-`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Absolute path to file with filter events and message aggregation configuration                                                               |
-| `format`      | <details><summary>value</summary>{\"time\":\"{{.LastTimestamp.Format \"2006-01-02T15:04:05Z\"}}\",\"involvedObjectKind\":\"{{.InvolvedObject.Kind}}\",\"involvedObjectNamespace\":\"{{.InvolvedObject.Namespace}}\",\"involvedObjectName\":\"{{.InvolvedObject.Name}}\",\"involvedObjectUid\":\"{{.InvolvedObject.UID}}\",\"involvedObjectApiVersion\":\"{{.InvolvedObject.APIVersion}}\",\"involvedObjectResourceVersion\":\"{{.InvolvedObject.ResourceVersion}}\",\"reason\":\"{{.Reason}}\",\"type\":\"{{.Type}}\",\"message\":\"{{js .Message}}\",\"kind\":\"KubernetesEvent\"}</details> | Format to print Event. It should be valid Golang template of `text/template` package                                                         |
+| `format`      | <details><summary>value</summary>{\"time\":\"{{.LastTimestamp.Format \"2006-01-02T15:04:05Z\"}}\",\"involvedObjectKind\":\"{{.InvolvedObject.Kind}}\",\"involvedObjectNamespace\":\"{{.InvolvedObject.Namespace}}\",\"involvedObjectName\":\"{{.InvolvedObject.Name}}\",\"involvedObjectUid\":\"{{.InvolvedObject.UID}}\",\"involvedObjectApiVersion\":\"{{.InvolvedObject.APIVersion}}\",\"involvedObjectResourceVersion\":\"{{.InvolvedObject.ResourceVersion}}\",\"reason\":\"{{.Reason}}\",\"type\":\"{{.Type}}\",\"message\":\"{{js .Message}}\",\"kind\":\"KubernetesEvent\"}</details> | Format to print Event. It should be valid Go template of `text/template` package                                                             |
 | `workers`     | `2`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Workers number for controller                                                                                                                |
 | `pprofEnable` | `true`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Enable pprof                                                                                                                                 |
 | `pprofAddr`   | `8080`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Port to health and pprof endpoint                                                                                                            |
 
-<!-- markdownlint-enable line-length -->
+<!-- markdownlint-enable line-length no-inline-html -->
 
 Example:
 
@@ -63,8 +63,8 @@ Example:
 <!-- markdownlint-enable line-length -->
 
 **Note**: You need to escape value of `format` parameter when you set value in `cloudEventsReader.args`. In pod `args`
-it should be set as it is, because K8s events Reader read it as simple string (not as json), as you can set format
-not only to be printed in json format.
+it should be set as it is, because K8s events Reader read it as simple string (not as JSON), as you can set format
+not only to be printed in JSON format.
 
 ### Events metrics
 
@@ -72,8 +72,8 @@ When you run qubership-kube-events-reader with `-output=metrics` the application
 
 <!-- markdownlint-disable line-length -->
 
-| Metric                                            | Type    | Labels                                                                                | Description                                                        |
-|---------------------------------------------------|---------|---------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| Metric                                           | Type    | Labels                                                                                | Description                                                        |
+|--------------------------------------------------|---------|---------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 | `kube_events_total`                              | counter | kind, event_namespace, type                                                           | Count of kubernetes events                                         |
 | `kube_events_normal_total`                       | counter | kind, event_object, event_namespace, reason, controller, controller_instance, message | Count of kubernetes events with type normal aggregated by message  |
 | `kube_events_warning_total`                      | counter | kind, event_object, event_namespace, reason, controller, controller_instance, message | Count of kubernetes events with type warning aggregated by message |
@@ -192,7 +192,7 @@ kube_events_reporting_controller_warning_total{controller="statefulset-controlle
 The `message` label of `kube_events_normal_total` and `kube_events_warning_total` holds a short, stable form of the
 event message, so that unique messages do not create new time series. The exporter builds it in this order:
 
-1. Removes the `(combined from similar events): ` prefix that Kubernetes adds when it merges similar events.
+1. Removes the `(combined from similar events):` prefix that Kubernetes adds when it merges similar events.
 2. Applies the custom rules from the `messageAggregation.rules` section of the `filtersPath` file. The first matching
    rule wins.
 3. Applies the built-in patterns for Kubernetes kinds, such as `Pod`, `Service`, and `HorizontalPodAutoscaler`. If
@@ -380,7 +380,7 @@ After you made changes related to a task do next steps:
 1. Check if there are any dependencies versions that can be upgraded in `go.mod`. Upgrade if it is possible.
 2. Create tests if you modified behavior of application or fixed a bug (especially if it is not covered by tests).
 3. Build qubership-kube-events-reader Docker image.
-4. Check that all pipeline is succeded (linter, build, deploy & test jobs are passed).
+4. Check that the whole pipeline succeeded (linter, build, deploy, and test jobs passed).
 5. Deploy qubership-kube-events-reader with [`qubership-logging-operator`](https://github.com/Netcracker/qubership-logging-operator/blob/main/docs/installation.md#cloud-events-reader)
    and [`qubership-monitoring-operator`](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation/components/exporters/cloud-events-exporter.md).
    Check that your feature works fine in possible cases.
@@ -392,10 +392,10 @@ After you made changes related to a task do next steps:
 
 K8s events Reader is installed in Cloud as a part of:
 
-1. Logging Service. Information about it`s installation
-   described [here](https://github.com/Netcracker/qubership-logging-operator/blob/main/docs/installation.md#cloud-events-reader).
-2. Platform Monitoring. Information about it`s installation
-   described [here](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation/components/exporters/cloud-events-exporter.md).
+1. Logging Service. See
+   [the Logging Service installation guide](https://github.com/Netcracker/qubership-logging-operator/blob/main/docs/installation.md#cloud-events-reader).
+2. Platform Monitoring. See
+   [the Platform Monitoring installation guide](https://github.com/Netcracker/qubership-monitoring-operator/blob/main/docs/installation/components/exporters/cloud-events-exporter.md).
 
 #### Prerequisites
 
