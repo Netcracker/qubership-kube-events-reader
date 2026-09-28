@@ -125,7 +125,7 @@ func main() {
 		slog.Info("sink initialized successfully", "sink", "stdout")
 	}
 	if slices.Contains(outputs, metricsType) {
-		metricsSink, err := sink.InitMetricsSink(srvBaseCtx, *metricsPort, *metricsPath, filters.GetSinkFiltersByName(metricsType), nil)
+		metricsSink, err := sink.InitMetricsSink(srvBaseCtx, *metricsPort, *metricsPath, filters.GetSinkFiltersByName(metricsType), &filters.MessageAggregation, nil)
 		if err != nil {
 			slog.Error("error occurred during initialization of metrics output", "error", err)
 			os.Exit(1)

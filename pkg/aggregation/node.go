@@ -12,4 +12,6 @@ var nodeAggregations = map[string]string{
 	"Resolv.conf file .* contains search line consisting of more than \\d+ domains!":           "Resolv.conf file contains search line consisting of more than domain count limit!",
 	"Resolv.conf file .* contains a search path which length is more than allowed \\d+ chars!": "Resolv.conf file contains a search path which length is more than allowed subdomain length!",
 	"Resolv.conf file .* contains search line which length is more than allowed \\d+ chars!":   "Resolv.conf file contains search line which length is more than max number of characters in the search path",
+	"Insufficient free disk space on the node's image filesystem.*":                            "Insufficient free disk space on the node's image filesystem",
+	"wanted to free \\d+ bytes, but freed \\d+ bytes space with errors in image deletion.*":    "Failed to free disk space because of errors in image deletion",
 }

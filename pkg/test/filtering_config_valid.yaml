@@ -12,3 +12,9 @@ sinks:
       - type: "Warning"
     exclude:
       - reportingController: "nginx-ingress-controller"
+messageAggregation:
+  maxMessageLength: 128
+  rules:
+    - kind: "^SparkApplication$"
+      message: "^failed to submit SparkApplication "
+      value: "Failed to submit SparkApplication"

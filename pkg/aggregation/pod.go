@@ -65,12 +65,18 @@ var podAggregations = map[string]string{
 	"Multi-Attach error for volume .* Volume is already used.*":                                           "Multi-Attach error for volume: volume is already used",
 	"Multi-Attach error for volume .* Volume is already exclusively attached to one node":                 "Multi-Attach error for volume: volume is already exclusively attached to one node",
 	"Add eth\\d+ .* from .*":                                                                              "Add eth network",
+	"(Readiness|Liveness|Startup) probe error:.*":                                                         "${1} probe error",
+	"Failed to create pod sandbox.*":                                                                      "Failed to create pod sandbox",
+	"Unable to attach or mount volumes.*":                                                                 "Unable to attach or mount volumes",
+	"\\d+/\\d+ nodes are available.*":                                                                     "Nodes are not available for scheduling",
+	"Exec lifecycle hook .* failed.*":                                                                     "Exec lifecycle hook failed",
+	"The node was low on resource: ([\\w.-]+)\\..*":                                                       "The node was low on resource: ${1}",
 }
 
 var podDisruptionBudgetAggregationRegexps = map[int]*regexp.Regexp{}
 var podDisruptionBudgetAggregationLabelValues = map[int]string{}
 var podDisruptionBudgetAggregations = map[string]string{
-	"Failed to get pods.*":                                                "Failed to get pods",
-	"Failed to calculate the number of expected pods.*":                   "Failed to calculate the number of expected pods",
-	"Pods selected by this PodDisruptionBudget (selector: .*) were found": "Found unmanaged pods associated with this PDB",
+	"Failed to get pods.*":                                                    "Failed to get pods",
+	"Failed to calculate the number of expected pods.*":                       "Failed to calculate the number of expected pods",
+	"Pods selected by this PodDisruptionBudget \\(selector: .*\\) were found": "Found unmanaged pods associated with this PDB",
 }

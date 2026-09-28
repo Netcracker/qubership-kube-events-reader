@@ -1,7 +1,10 @@
 package aggregation
 
 import (
+	"cmp"
+	"maps"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -36,7 +39,45 @@ var (
 	ownerRefDoesNotExistRegexp = regexp.MustCompile("ownerRef .* does not exist in namespace.*")
 )
 
+// apiErrorAggregations match errors of the Kubernetes API server that any controller can put into an event message.
+// They are checked in order for all kinds when neither custom rules nor kind patterns match.
+var apiErrorAggregations = []struct {
+	expression *regexp.Regexp
+	value      string
+}{
+	{regexp.MustCompile("Operation cannot be fulfilled on .*the object has been modified"), "Operation cannot be fulfilled: the object has been modified"},
+	{regexp.MustCompile("Operation cannot be fulfilled on .*StorageError: invalid object"), "Operation cannot be fulfilled: invalid object"},
+	{regexp.MustCompile("Operation cannot be fulfilled on "), "Operation cannot be fulfilled"},
+	{regexp.MustCompile(`is forbidden: [Uu]ser "[^"]*"(?: \(groups=[^)]*\))? cannot ([\w-]+) resource "([^"]+)"`), "Forbidden: User cannot ${1} resource ${2}"},
+	{regexp.MustCompile(`admission webhook "([^"]+)" denied the request`), "Admission webhook ${1} denied the request"},
+	{regexp.MustCompile(`failed calling webhook "([^"]+)"`), "Failed calling webhook ${1}"},
+}
+
+// GetCommonMessage returns a low-cardinality value for the message label.
+// Custom rules are checked first, then the built-in patterns for the kind.
+// A message that matches nothing is cut to its first line and to the maximum message length.
 func GetCommonMessage(kind string, reason string, message string) string {
+	message = strings.TrimPrefix(message, combinedEventsPrefix)
+	if value, ok := getMessageByCustomRules(kind, reason, message); ok {
+		return truncateMessage(value)
+	}
+	value := getBuiltInMessage(kind, reason, message)
+	if value == message {
+		value = getMessageByAPIError(message)
+	}
+	return truncateMessage(value)
+}
+
+func getMessageByAPIError(message string) string {
+	for _, aggregation := range apiErrorAggregations {
+		if match := aggregation.expression.FindStringSubmatchIndex(message); match != nil {
+			return string(aggregation.expression.ExpandString(nil, aggregation.value, message, match))
+		}
+	}
+	return message
+}
+
+func getBuiltInMessage(kind string, reason string, message string) string {
 	switch strings.ToLower(kind) {
 	case kindPod:
 		return getCommonMessageForEvent(reason, message, podAggregationRegexps, podAggregationLabelValues)
@@ -85,7 +126,9 @@ func GetCommonMessage(kind string, reason string, message string) string {
 	}
 }
 
-func InitAggregations() {
+// InitAggregations compiles the built-in patterns and applies the user-defined configuration.
+// The configuration can be nil.
+func InitAggregations(config *Config) error {
 	initAggregationsForKind(podAggregations, podAggregationRegexps, podAggregationLabelValues)
 	initAggregationsForKind(podDisruptionBudgetAggregations, podDisruptionBudgetAggregationRegexps, podDisruptionBudgetAggregationLabelValues)
 	initAggregationsForKind(dsAggregations, dsAggregationRegexps, dsAggregationLabelValues)
@@ -107,23 +150,37 @@ func InitAggregations() {
 	initAggregationsForKind(csrAggregations, csrAggregationRegexps, csrAggregationLabelValues)
 	initAggregationsForKind(certificateAggregations, certificateAggregationRegexps, certificateAggregationLabelValues)
 	initAggregationsForKind(challengeAggregations, challengeAggregationRegexps, challengeAggregationLabelValues)
+	return applyConfig(config)
 }
 
 func initAggregationsForKind(aggregations map[string]string, regexps map[int]*regexp.Regexp, labelValues map[int]string) {
-	it := 0
-	for expression, value := range aggregations {
+	// Longer patterns go first, so getCommonMessageForEvent prefers a specific pattern over a generic one
+	// that matches at the same position. The order is stable between runs.
+	expressions := slices.SortedFunc(maps.Keys(aggregations), func(a, b string) int {
+		return cmp.Or(cmp.Compare(len(b), len(a)), cmp.Compare(a, b))
+	})
+	for it, expression := range expressions {
 		regexps[it] = regexp.MustCompile(expression)
-		labelValues[it] = value
-		it++
+		labelValues[it] = aggregations[expression]
 	}
 	clear(aggregations)
 }
 
 func getCommonMessageForEvent(reason string, message string, regexps map[int]*regexp.Regexp, labelValues map[int]string) string {
-	for index, expression := range regexps {
-		if expression.MatchString(message) {
-			return labelValues[index]
+	// Several patterns can match one message, for example "Liveness probe failed" and "Error: .*" in the probe output.
+	// The match that starts first wins. On a tie the longer pattern wins, because patterns are sorted by length.
+	best, bestMatch := -1, []int(nil)
+	for index := range len(regexps) {
+		match := regexps[index].FindStringSubmatchIndex(message)
+		if match != nil && (bestMatch == nil || match[0] < bestMatch[0]) {
+			best, bestMatch = index, match
+			if match[0] == 0 {
+				break
+			}
 		}
+	}
+	if best >= 0 {
+		return string(regexps[best].ExpandString(nil, labelValues[best], message, bestMatch))
 	}
 	if strings.EqualFold(reason, "OwnerRefInvalidNamespace") {
 		return "ownerRef does not exist in namespace"

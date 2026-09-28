@@ -2,13 +2,16 @@ package filter
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"log/slog"
 	"os"
+
+	"github.com/Netcracker/qubership-kube-events-reader/pkg/aggregation"
+	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
 type Filters struct {
-	Sinks []*Sink `json:"sinks"`
+	Sinks              []*Sink            `json:"sinks"`
+	MessageAggregation aggregation.Config `json:"messageAggregation,omitempty"`
 }
 
 type Sink struct {

@@ -2,9 +2,11 @@ package filter
 
 import (
 	"flag"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
+
+	"github.com/Netcracker/qubership-kube-events-reader/pkg/aggregation"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_ParseFiltersConfiguration(t *testing.T) {
@@ -12,7 +14,7 @@ func Test_ParseFiltersConfiguration(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, filters)
 	expectedFilters := &Filters{
-		[]*Sink{
+		Sinks: []*Sink{
 			{
 				Name: "metrics",
 				Match: []EventMatch{
@@ -31,6 +33,12 @@ func Test_ParseFiltersConfiguration(t *testing.T) {
 				Exclude: []EventMatch{
 					{ReportingController: "nginx-ingress-controller"},
 				},
+			},
+		},
+		MessageAggregation: aggregation.Config{
+			MaxMessageLength: 128,
+			Rules: []aggregation.Rule{
+				{Kind: "^SparkApplication$", Message: "^failed to submit SparkApplication ", Value: "Failed to submit SparkApplication"},
 			},
 		},
 	}
